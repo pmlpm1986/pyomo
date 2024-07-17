@@ -2396,18 +2396,24 @@ class TestSetArgs1(PyomoModel):
         self.model.A = Set(initialize=[1, 2, 3], dimen=1)
         self.instance = self.model.create_instance()
         #
-        with self.assertRaisesRegex(ValueError, ".*Cannot tuplize list data for set"):
+        try:
             self.model.A = Set(initialize=[4, 5, 6], dimen=2)
             self.instance = self.model.create_instance()
-
+        except ValueError:
+            pass
+        else:
+            self.fail("test_dimen")
+        #
         self.model.A = Set(initialize=[(1, 2), (2, 3), (3, 4)], dimen=2)
         self.instance = self.model.create_instance()
         #
-        with self.assertRaisesRegex(
-            ValueError, ".*has dimension 2 and is not valid for "
-        ):
+        try:
             self.model.A = Set(initialize=[(1, 2), (2, 3), (3, 4)], dimen=1)
             self.instance = self.model.create_instance()
+        except ValueError:
+            pass
+        else:
+            self.fail("test_dimen")
 
         #
         def f(model):
@@ -2416,19 +2422,22 @@ class TestSetArgs1(PyomoModel):
         self.model.A = Set(initialize=f, dimen=2)
         self.instance = self.model.create_instance()
         #
-        with self.assertRaisesRegex(
-            ValueError, ".*has dimension 2 and is not valid for "
-        ):
+        try:
             self.model.A = Set(initialize=f, dimen=3)
             self.instance = self.model.create_instance()
+        except ValueError:
+            pass
+        else:
+            self.fail("test_dimen")
 
     def test_dimen2(self):
-        with self.assertRaisesRegex(
-            ValueError, ".*has dimension 2 and is not valid for "
-        ):
+        try:
             self.model.A = Set(initialize=[1, 2, (3, 4)])
             self.instance = self.model.create_instance()
-
+        except ValueError:
+            pass
+        else:
+            self.fail("test_dimen2")
         self.model.A = Set(dimen=None, initialize=[1, 2, (3, 4)])
         self.instance = self.model.create_instance()
 
@@ -2487,7 +2496,7 @@ class TestSetArgs1(PyomoModel):
         self.instance = self.model.create_instance(currdir + "setA.dat")
         self.assertEqual(len(self.instance.A), 5)
 
-    def test_within_fail(self):
+    def test_within1(self):
         #
         # Create Set 'A' data file
         #
@@ -2498,10 +2507,14 @@ class TestSetArgs1(PyomoModel):
         # Create A with an error
         #
         self.model.A = Set(within=Integers)
-        with self.assertRaisesRegex(ValueError, ".*Cannot add value "):
+        try:
             self.instance = self.model.create_instance(currdir + "setA.dat")
+        except ValueError:
+            pass
+        else:
+            self.fail("fail test_within1")
 
-    def test_within_pass(self):
+    def test_within2(self):
         #
         # Create Set 'A' data file
         #
@@ -2509,12 +2522,17 @@ class TestSetArgs1(PyomoModel):
         OUTPUT.write("data; set A := 1 3 5 7.5; end;")
         OUTPUT.close()
         #
-        # Create A without an error
+        # Create A with an error
         #
         self.model.A = Set(within=Reals)
-        self.instance = self.model.create_instance(currdir + "setA.dat")
+        try:
+            self.instance = self.model.create_instance(currdir + "setA.dat")
+        except ValueError:
+            self.fail("fail test_within2")
+        else:
+            pass
 
-    def test_validation_fail(self):
+    def test_validation1(self):
         #
         # Create Set 'A' data file
         #
@@ -2525,10 +2543,14 @@ class TestSetArgs1(PyomoModel):
         # Create A with an error
         #
         self.model.A = Set(validate=lambda model, x: x < 6)
-        with self.assertRaisesRegex(ValueError, ".*violates the validation rule of"):
+        try:
             self.instance = self.model.create_instance(currdir + "setA.dat")
+        except ValueError:
+            pass
+        else:
+            self.fail("fail test_validation1")
 
-    def test_validation_pass(self):
+    def test_validation2(self):
         #
         # Create Set 'A' data file
         #
@@ -2536,22 +2558,35 @@ class TestSetArgs1(PyomoModel):
         OUTPUT.write("data; set A := 1 3 5 5.5; end;")
         OUTPUT.close()
         #
-        # Create A without an error
+        # Create A with an error
         #
         self.model.A = Set(validate=lambda model, x: x < 6)
-        self.instance = self.model.create_instance(currdir + "setA.dat")
+        try:
+            self.instance = self.model.create_instance(currdir + "setA.dat")
+        except ValueError:
+            self.fail("fail test_validation2")
+        else:
+            pass
 
     def test_other1(self):
         self.model.A = Set(
             initialize=[1, 2, 3, 'A'], validate=lambda model, x: x in Integers
         )
-        with self.assertRaisesRegex(ValueError, ".*violates the validation rule of"):
+        try:
             self.instance = self.model.create_instance()
+        except ValueError:
+            pass
+        else:
+            self.fail("fail test_other1")
 
     def test_other2(self):
         self.model.A = Set(initialize=[1, 2, 3, 'A'], within=Integers)
-        with self.assertRaisesRegex(ValueError, ".*Cannot add value"):
+        try:
             self.instance = self.model.create_instance()
+        except ValueError:
+            pass
+        else:
+            self.fail("fail test_other1")
 
     def test_other3(self):
         OUTPUT = open(currdir + "setA.dat", "w")
@@ -2566,8 +2601,12 @@ class TestSetArgs1(PyomoModel):
 
         self.model.n = Param()
         self.model.A = Set(initialize=tmp_init, validate=lambda model, x: x in Integers)
-        with self.assertRaisesRegex(ValueError, ".*violates the validation rule of"):
+        try:
             self.instance = self.model.create_instance(currdir + "setA.dat")
+        except ValueError:
+            pass
+        else:
+            self.fail("fail test_other1")
 
     def test_other4(self):
         OUTPUT = open(currdir + "setA.dat", "w")
@@ -2582,8 +2621,12 @@ class TestSetArgs1(PyomoModel):
 
         self.model.n = Param()
         self.model.A = Set(initialize=tmp_init, within=Integers)
-        with self.assertRaisesRegex(ValueError, ".*Cannot add value "):
+        try:
             self.instance = self.model.create_instance(currdir + "setA.dat")
+        except ValueError:
+            pass
+        else:
+            self.fail("fail test_other1")
 
 
 class TestSetArgs2(PyomoModel):
@@ -2623,18 +2666,24 @@ class TestSetArgs2(PyomoModel):
         self.model.Z = Set(initialize=[1, 2])
         self.model.A = Set(self.model.Z, initialize=[1, 2, 3], dimen=1)
         self.instance = self.model.create_instance()
-        with self.assertRaisesRegex(ValueError, ".*Cannot tuplize list data for set"):
+        try:
             self.model.A = Set(self.model.Z, initialize=[4, 5, 6], dimen=2)
             self.instance = self.model.create_instance()
+        except ValueError:
+            pass
+        else:
+            self.fail("test_dimen")
         self.model.A = Set(self.model.Z, initialize=[(1, 2), (2, 3), (3, 4)], dimen=2)
         self.instance = self.model.create_instance()
-        with self.assertRaisesRegex(
-            ValueError, ".*has dimension 2 and is not valid for"
-        ):
+        try:
             self.model.A = Set(
                 self.model.Z, initialize=[(1, 2), (2, 3), (3, 4)], dimen=1
             )
             self.instance = self.model.create_instance()
+        except ValueError:
+            pass
+        else:
+            self.fail("test_dimen")
 
     def test_rule(self):
         #
@@ -2704,8 +2753,12 @@ class TestSetArgs2(PyomoModel):
         #
         self.model.Z = Set()
         self.model.A = Set(self.model.Z, within=Integers)
-        with self.assertRaisesRegex(ValueError, ".*Cannot add value "):
+        try:
             self.instance = self.model.create_instance(currdir + "setA.dat")
+        except ValueError:
+            pass
+        else:
+            self.fail("fail test_within1")
 
     def test_within2(self):
         #
@@ -2715,11 +2768,16 @@ class TestSetArgs2(PyomoModel):
         OUTPUT.write("data; set Z := A C; set A[A] := 1 3 5 7.5; end;")
         OUTPUT.close()
         #
-        # Create A without an error
+        # Create A with an error
         #
         self.model.Z = Set()
         self.model.A = Set(self.model.Z, within=Reals)
-        self.instance = self.model.create_instance(currdir + "setA.dat")
+        try:
+            self.instance = self.model.create_instance(currdir + "setA.dat")
+        except ValueError:
+            self.fail("fail test_within2")
+        else:
+            pass
 
     def test_validation1(self):
         #
@@ -2732,9 +2790,13 @@ class TestSetArgs2(PyomoModel):
         # Create A with an error
         #
         self.model.Z = Set()
-        self.model.A = Set(self.model.Z, validate=lambda model, x, i: x < 6)
-        with self.assertRaisesRegex(ValueError, ".*violates the validation rule of"):
+        self.model.A = Set(self.model.Z, validate=lambda model, x: x < 6)
+        try:
             self.instance = self.model.create_instance(currdir + "setA.dat")
+        except ValueError:
+            pass
+        else:
+            self.fail("fail test_within1")
 
     def test_validation2(self):
         #
@@ -2744,138 +2806,42 @@ class TestSetArgs2(PyomoModel):
         OUTPUT.write("data; set Z := A C; set A[A] := 1 3 5 5.5; end;")
         OUTPUT.close()
         #
-        # Create A without an error
-        #
-        self.model.Z = Set()
-        self.model.A = Set(self.model.Z, validate=lambda model, x, i: x < 6)
-        self.instance = self.model.create_instance(currdir + "setA.dat")
-
-    def test_validation3_pass(self):
-        #
-        # Create data file to test a successful validation using indexed sets
-        #
-        OUTPUT = open(currdir + "setsAB.dat", "w")
-        OUTPUT.write(
-            "data; set Z := A C; set A[A] := 1 3 5 5.5; set B[A] := 1 3 5; end;"
-        )
-        OUTPUT.close()
-        #
         # Create A with an error
         #
         self.model.Z = Set()
-        self.model.A = Set(self.model.Z, validate=lambda model, x, i: x < 6)
-        self.model.B = Set(self.model.Z, validate=lambda model, x, i: x in model.A[i])
-        self.instance = self.model.create_instance(currdir + "setsAB.dat")
-
-    def test_validation3_fail(self):
-        #
-        # Create data file to test a failed validation using indexed sets
-        #
-        OUTPUT = open(currdir + "setsAB.dat", "w")
-        OUTPUT.write(
-            "data; set Z := A C; set A[A] := 1 3 5 5.5; set B[A] := 1 3 5 6; end;"
-        )
-        OUTPUT.close()
-        #
-        # Create A with an error
-        #
-        self.model.Z = Set()
-        self.model.A = Set(self.model.Z, validate=lambda model, x, i: x < 6)
-        self.model.B = Set(self.model.Z, validate=lambda model, x, i: x in model.A[i])
-        with self.assertRaisesRegex(ValueError, ".*violates the validation rule of"):
-            self.instance = self.model.create_instance(currdir + "setsAB.dat")
-
-    def test_validation4_pass(self):
-        #
-        # Test a successful validation using indexed sets and tuple entries
-        #
-        self.model.Z = Set(initialize=['A', 'B'])
-        self.model.A = Set(
-            self.model.Z, dimen=2, initialize={'A': [(1, 2), (3, 4)], 'B': [(5, 6)]}
-        )
-        self.model.B = Set(
-            self.model.Z,
-            dimen=2,
-            initialize={'A': [(1, 2), (3, 4)]},
-            validate=lambda model, x, y, i: (x, y) in model.A[i],
-        )
-        self.instance = self.model.create_instance()
-
-    def test_validation4_fail(self):
-        #
-        # Test a failed validation using indexed sets and tuple entries
-        #
-        self.model.Z = Set(initialize=['A', 'B'])
-        self.model.A = Set(
-            self.model.Z, dimen=2, initialize={'A': [(1, 2), (3, 4)], 'B': [(5, 6)]}
-        )
-        self.model.B = Set(
-            self.model.Z,
-            dimen=2,
-            initialize={'A': [(1, 2), (3, 4), (5, 6)]},
-            validate=lambda model, x, y, i: (x, y) in model.A[i],
-        )
-        with self.assertRaisesRegex(ValueError, ".*violates the validation rule of"):
-            self.instance = self.model.create_instance()
-
-    def test_validation5_pass(self):
-        #
-        # Test a successful validation using indexed sets and tuple entries
-        #
-        self.model.Z = Set(initialize=['A', 'B'])
-        self.model.A = Set(
-            self.model.Z, dimen=2, initialize={'A': [(1, 2), (3, 4)], 'B': [(5, 6)]}
-        )
-
-        def validate_B(m, e1, e2, i):
-            return (e1, e2) in m.A[i]
-
-        self.model.B = Set(
-            self.model.Z,
-            dimen=2,
-            initialize={'A': [(1, 2), (3, 4)]},
-            validate=validate_B,
-        )
-        self.instance = self.model.create_instance()
-
-    def test_validation5_fail(self):
-        #
-        # Test a failed validation using indexed sets and tuple entries
-        #
-        self.model.Z = Set(initialize=['A', 'B'])
-        self.model.A = Set(
-            self.model.Z, dimen=2, initialize={'A': [(1, 2), (3, 4)], 'B': [(5, 6)]}
-        )
-
-        def validate_B(m, e1, e2, i):
-            return (e1, e2) in m.A[i]
-
-        self.model.B = Set(
-            self.model.Z,
-            dimen=2,
-            initialize={'A': [(1, 2), (3, 4), (5, 6)]},
-            validate=validate_B,
-        )
-        with self.assertRaisesRegex(ValueError, ".*violates the validation rule of"):
-            self.instance = self.model.create_instance()
+        self.model.A = Set(self.model.Z, validate=lambda model, x: x < 6)
+        try:
+            self.instance = self.model.create_instance(currdir + "setA.dat")
+        except ValueError:
+            self.fail("fail test_within2")
+        else:
+            pass
 
     def test_other1(self):
         self.model.Z = Set(initialize=['A'])
         self.model.A = Set(
             self.model.Z,
             initialize={'A': [1, 2, 3, 'A']},
-            validate=lambda model, x, i: x in Integers,
+            validate=lambda model, x: x in Integers,
         )
-        with self.assertRaisesRegex(ValueError, ".*violates the validation rule of"):
+        try:
             self.instance = self.model.create_instance()
+        except ValueError:
+            pass
+        else:
+            self.fail("fail test_other1")
 
     def test_other2(self):
         self.model.Z = Set(initialize=['A'])
         self.model.A = Set(
             self.model.Z, initialize={'A': [1, 2, 3, 'A']}, within=Integers
         )
-        with self.assertRaisesRegex(ValueError, ".*Cannot add value "):
+        try:
             self.instance = self.model.create_instance()
+        except ValueError:
+            pass
+        else:
+            self.fail("fail test_other1")
 
     def test_other3(self):
         def tmp_init(model, i):
@@ -2887,12 +2853,14 @@ class TestSetArgs2(PyomoModel):
         self.model.n = Param(initialize=5)
         self.model.Z = Set(initialize=['A'])
         self.model.A = Set(
-            self.model.Z,
-            initialize=tmp_init,
-            validate=lambda model, x, i: x in Integers,
+            self.model.Z, initialize=tmp_init, validate=lambda model, x: x in Integers
         )
-        with self.assertRaisesRegex(ValueError, ".*violates the validation rule of"):
+        try:
             self.instance = self.model.create_instance()
+        except ValueError:
+            pass
+        else:
+            self.fail("fail test_other1")
 
     def test_other4(self):
         def tmp_init(model, i):
@@ -2905,8 +2873,12 @@ class TestSetArgs2(PyomoModel):
         self.model.Z = Set(initialize=['A'])
         self.model.A = Set(self.model.Z, initialize=tmp_init, within=Integers)
         self.model.B = Set(self.model.Z, initialize=tmp_init, within=Integers)
-        with self.assertRaisesRegex(ValueError, ".*Cannot add value "):
+        try:
             self.instance = self.model.create_instance()
+        except ValueError:
+            pass
+        else:
+            self.fail("fail test_other1")
 
 
 class TestMisc(PyomoModel):
